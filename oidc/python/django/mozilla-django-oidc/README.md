@@ -19,8 +19,6 @@ Open Source implementation of OpenID Connect for Django web applications.
 3. Setup python environment:
 
    ```bash
-   python3 -m venv env
-   source env/bin/activate
    pip install -r requirements.txt
    ```
 
