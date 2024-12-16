@@ -137,6 +137,15 @@ You can configure the most important settings in your Django settings file: see 
    ]
    ```
 
+## Get information about user
+
+You can get user information from User model.
+You can create custom user module to get cutom claims:
+
+- For `sciper` number you need to get uniqueid claim.
+
+You can see [backend](epfl/accounts/backend.py) class implementation of `get_userinfo` that get information from user endpoint (graph) and from `id token` that contains the field `uniqueid` (`sciper`).
+
 ## Documentation
 
 - [Official Settings documentation](https://mozilla-django-oidc.readthedocs.io/en/stable/settings.html)
