@@ -26,9 +26,9 @@
       <!-- Case 3: Not Logged In -->
       <div v-else class="status-message not-logged-in">
       	<p>Please log in to access the content.</p>
-        <button @click="handleLogin" :disabled="interactionStatus !== 'none'">
+       <!-- <button @click="handleLogin" :disabled="interactionStatus !== 'none'">
           {{ interactionStatus !== 'none' ? 'Processing...' : 'Login with Microsoft Entra ID' }}
-        </button>
+        </button>-->
       </div>
     </div>
 
