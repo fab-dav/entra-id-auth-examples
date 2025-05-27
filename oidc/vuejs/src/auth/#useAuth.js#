@@ -105,7 +105,7 @@ async function initializeAuth() {
      //     interactionStatus.value = msalInstance.getInteractionStatus();
  });
 
- export function useAuth() {
+/* export function useAuth() {
      onMounted(initializeAuth);
      return {
          isAuthenticated,
@@ -117,4 +117,22 @@ async function initializeAuth() {
          interactionStatus
      };
  }
+*/
 
+// --- Initialize auth state ONCE when the module is first imported ---
+// This is a common pattern for singleton-like services.
+// It will run after handleRedirectPromise in main.js if that involves a redirect.
+// If no redirect, it runs immediately.
+let initializationPromise = null;
+function ensureInitialized() {
+    if (!initializationPromise) {
+        initializationPromise = initializeAuth();
+    }
+    return initializationPromise;
+}
+ensureInitialized(); // Trigger initialization as soon as this module is loaded.
+
+
+
+    };
+}
