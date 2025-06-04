@@ -52,7 +52,6 @@ async function login() {
     await userManager.signinRedirect(); // Redirects to IdP login page
   } catch (error) {
     console.error('OIDC Login failed to initiate:', error);
-    // Handle error, e.g., show a message to the user
   }
 }
 
@@ -60,14 +59,14 @@ async function logout() {
   try {
     const user = await userManager.getUser();
     if (user) {
-      // If your IdP supports it, you can pass id_token_hint for faster logout
+      // If supported, pass id_token_hint for faster logout
       // await userManager.signoutRedirect({ id_token_hint: user.id_token });
       await userManager.signoutRedirect();
     } else {
-      // If no user, perhaps just clear local state and redirect
+      // If no user, just clear local state and optionally redirect
       isAuthenticated.value = false;
       userProfile.value = null;
-      // router.push('/'); // Or some other appropriate page
+      // router.push('/'); 
     }
   } catch (error) {
     console.error('OIDC Logout failed to initiate:', error);
@@ -76,9 +75,9 @@ async function logout() {
 
 // This composable will be used by the App and Router
 export function useAuth() {
-  // Initialize auth state when this composable is first used
+  // Initialize auth state when first used
 
-  // Watch for changes from userManager events (more robust than just onMounted)
+  // Watch for changes from userManager events
   const eventCallback = (user) => {
     if (user && !user.expired) {
       userProfile.value = user.profile;

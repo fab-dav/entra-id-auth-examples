@@ -9,7 +9,6 @@
   </div>
   <div v-if="isProcessingCallback || isLoading">
     Processing authentication, please wait...
-    <!-- Or a more sophisticated loading spinner -->
   </div>
   <div v-if="authError" class="error-message">
      Authentication Error: {{ authError }}

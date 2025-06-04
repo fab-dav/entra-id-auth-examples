@@ -2,11 +2,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import AuthCallback from '../views/AuthCallback.vue';
-import LogoutCallback from '../views/LogoutCallback.vue'; // If you use it
+import LogoutCallback from '../views/LogoutCallback.vue';
 import UnauthorizedView from '../views/UnauthorizedView.vue';
-import { userManager } from '../auth/oidc.service'; // For checking user directly
+import { userManager } from '../auth/oidc.service'; 
 
-// Allowed emails (consider moving to a shared config or using useOidcAuth)
+// Allowed emails
 const allowedEmailsString = import.meta.env.VITE_ALLOWED_EMAILS || '';
 const ALLOWED_EMAILS = allowedEmailsString
   .split(',')
@@ -16,7 +16,7 @@ const ALLOWED_EMAILS = allowedEmailsString
 const routes = [
   { path: '/', name: 'home', component: HomeView },
   { path: '/auth-callback', name: 'authCallback', component: AuthCallback },
-  { path: '/logout-callback', name: 'logoutCallback', component: LogoutCallback }, // If used
+  { path: '/logout-callback', name: 'logoutCallback', component: LogoutCallback },
   { path: '/unauthorized', name: 'unauthorized', component: UnauthorizedView },
 ];
 
@@ -45,8 +45,7 @@ router.beforeEach(async (to, from, next) => {
         console.error("Router guard: signinRedirect failed", err);
         next(false); // Prevent navigation if signinRedirect itself errors
       });
-    // signinRedirect initiates a redirect, so next() might not be strictly needed
-    // but returning false ensures the current navigation is cancelled.
+    // next(false) => current navigation is cancelled.
     return next(false);
   } else if (requiresWhitelistedEmail && isAuthenticated) {
     const userEmail = oidcUser.profile?.email?.toLowerCase();
