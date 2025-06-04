@@ -10,7 +10,7 @@
   },
     "dependencies": {	
 	"vue": "^3.4.0",
-	"oidc-client-ts": "^2.x.x",
+
 	"vue-router": "^4.2.5"
   },
   "devDependencies": {

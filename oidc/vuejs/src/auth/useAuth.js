@@ -1,120 +1,106 @@
-import { ref, onMounted, computed, readonly } from 'vue';
-import { PublicClientApplication, InteractionStatus } from '@azure/msal-browser';
-import { msalInstance, loginRequest } from './msal.service';
+// src/auth/useAuth.js
+import { ref, onMounted, computed, watch } from 'vue';
+import { userManager } from './oidc.service'; // Import the UserManager instance
+import { useRouter } from 'vue-router'; // If needed for navigation after logout
 
 const isAuthenticated = ref(false);
-const user = ref(null);
-const interactionStatus = ref(InteractionStatus.None);
-const isLoading = ref(true);
+const userProfile = ref(null); // To store OIDC user profile claims
+const isLoading = ref(true); // Initial loading state
 
-// Whitelist of allowed email addresses from .env
-// VITE_ALLOWED_EMAILS should be a comma-separated string
 const allowedEmailsString = import.meta.env.VITE_ALLOWED_EMAILS || '';
 const ALLOWED_EMAILS = allowedEmailsString
-    .split(',')
-    .map(email => email.trim().toLowerCase())
-    .filter(email => email.length > 0); // Filter out empty strings
-
- if (ALLOWED_EMAILS.length === 0) {
-     console.warn("No allowed emails configured in VITE_ALLOWED_EMAILS. Authorization check might not work as expected.");
- }
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(email => email.length > 0);
 
 const isAuthorizedUser = computed(() => {
-    if (isAuthenticated.value && user.value?.username) {
-        return ALLOWED_EMAILS.includes(user.value.username.toLowerCase());
-    }
-    return false;
+    console.log("userProfile.value:", userProfile.value)
+  if (isAuthenticated.value && userProfile.value?.email) {
+    return ALLOWED_EMAILS.includes(userProfile.value.email.toLowerCase());
+  }
+  // Azure AD sometimes puts UPN in 'preferred_username' if email isn't directly in profile
+  if (isAuthenticated.value && userProfile.value?.preferred_username && ALLOWED_EMAILS.includes(userProfile.value.preferred_username.toLowerCase())) {
+    return true;
+  }
+  return false;
 });
 
-// ... (initializeAuth, login, logout, event callback functions remain the same) ...
 async function initializeAuth() {
-    isLoading.value = true;
-    console.log('--- MSAL Instance Inspection ---');
-    console.log('msalInstance object:', msalInstance);
-
-    if (msalInstance) {
-        console.log('typeof msalInstance.getInteractionStatus:', typeof msalInstance.getInteractionStatus);
-        console.log('typeof msalInstance.getAllAccounts:', typeof msalInstance.getAllAccounts);
-        console.log('msalInstance hasOwnProperty("getInteractionStatus"):', msalInstance.hasOwnProperty('getInteractionStatus'));
-
-        // Log the prototype chain to see where methods are defined
-        let proto = Object.getPrototypeOf(msalInstance);
-        let i = 0;
-        while (proto && i < 5) { // Limit to 5 levels deep for brevity
-            console.log(`Prototype level ${i}:`, proto);
-            console.log(`  Has getInteractionStatus on this proto:`, proto.hasOwnProperty('getInteractionStatus'));
-            console.log(`  Has getAllAccounts on this proto:`, proto.hasOwnProperty('getAllAccounts'));
-            proto = Object.getPrototypeOf(proto);
-            i++;
-        }
+  isLoading.value = true;
+  try {
+    const oidcUser = await userManager.getUser();
+    if (oidcUser && !oidcUser.expired) {
+      userProfile.value = oidcUser.profile;
+      isAuthenticated.value = true;
+      console.log('User initialized from storage:', oidcUser.profile);
     } else {
-        console.error('CRITICAL: msalInstance is undefined in initializeAuth!');
+	// No user in storage or token expired, ensure clean state
+	console.log("no user in storage...")
+	isAuthenticated.value = false;
+	userProfile.value = null;
     }
-    console.log('--- End MSAL Instance Inspection ---');
-
-    const accounts = msalInstance.getAllAccounts(); 
-    if (accounts.length > 0) {
-        msalInstance.setActiveAccount(accounts[0]);
-        user.value = accounts[0];
-        isAuthenticated.value = true;
-    }
-    isLoading.value = false;
+  } catch (e) {
+    console.error("Error initializing OIDC auth state:", e);
+    isAuthenticated.value = false;
+    userProfile.value = null;
+  }
+  isLoading.value = false;
 }
 
- async function login() {
-     try {
-         await msalInstance.loginRedirect(loginRequest);
-     } catch (error) {
-         console.error('Login failed:', error);
-     }
- }
+async function login() {
+  try {
+    await userManager.signinRedirect(); // Redirects to IdP login page
+  } catch (error) {
+    console.error('OIDC Login failed to initiate:', error);
+    // Handle error, e.g., show a message to the user
+  }
+}
 
- async function logout() {
-     const currentAccount = msalInstance.getActiveAccount();
-     if (currentAccount) {
-         try {
-             await msalInstance.logoutRedirect({
-                 account: currentAccount,
-                 // postLogoutRedirectUri from msalConfig will be used if set
-             });
-         } catch (error) {
-             console.error('Logout failed:', error);
-         }
-     } else {
-         isAuthenticated.value = false;
-         user.value = null;
-     }
- }
+async function logout() {
+  try {
+    const user = await userManager.getUser();
+    if (user) {
+      // If your IdP supports it, you can pass id_token_hint for faster logout
+      // await userManager.signoutRedirect({ id_token_hint: user.id_token });
+      await userManager.signoutRedirect();
+    } else {
+      // If no user, perhaps just clear local state and redirect
+      isAuthenticated.value = false;
+      userProfile.value = null;
+      // router.push('/'); // Or some other appropriate page
+    }
+  } catch (error) {
+    console.error('OIDC Logout failed to initiate:', error);
+  }
+}
 
- msalInstance.addEventCallback((event) => {
-     if (event.eventType === "msal:loginSuccess" && event.payload.account) {
-         msalInstance.setActiveAccount(event.payload.account);
-         user.value = event.payload.account;
-         isAuthenticated.value = true;
-         isLoading.value = false;
-     } else if (event.eventType === "msal:logoutSuccess") {
-         isAuthenticated.value = false;
-         user.value = null;
-         isLoading.value = false;
-     } else if (event.eventType === "msal:acquireTokenSuccess" && event.payload.account) {
-         msalInstance.setActiveAccount(event.payload.account);
-         user.value = event.payload.account;
-         isAuthenticated.value = true;
-         isLoading.value = false;
-     }
-     //     interactionStatus.value = msalInstance.getInteractionStatus();
- });
+// This composable will be used by the App and Router
+export function useAuth() {
+  // Initialize auth state when this composable is first used
 
- export function useAuth() {
-     onMounted(initializeAuth);
-     return {
-         isAuthenticated,
-         isAuthorizedUser,
-         user,
-         login,
-         logout,
-         isLoading,
-         interactionStatus
-     };
- }
+  // Watch for changes from userManager events (more robust than just onMounted)
+  const eventCallback = (user) => {
+    if (user && !user.expired) {
+      userProfile.value = user.profile;
+      isAuthenticated.value = true;
+    } else {
+      userProfile.value = null;
+      isAuthenticated.value = false;
+    }
+    isLoading.value = false; // Stop loading once user state is determined
+  };
+
+  userManager.events.addUserLoaded(eventCallback);
+  userManager.events.addUserUnloaded(() => eventCallback(null)); // User unloaded means not authenticated
+
+  return {
+    isAuthenticated,
+    isAuthorizedUser,
+    userProfile, 
+    login,
+    logout,
+    isLoading,
+    initializeAuth // Expose this so App.vue can call it on mount
+  };
+}
 

@@ -10,16 +10,16 @@
     <div v-else>
       <!-- Case 1: Logged in AND Authorized -->
       <div v-if="isAuthenticated && isAuthorizedUser" class="status-message authorized">
-        <h1>Welcome back, {{ user?.name || user?.username }}!</h1>
+        <h1>Welcome back, {{ userProfile?.mail }}!</h1>
         <p>You are logged in and authorized to access all features.</p>
-        <p>Your email: {{ user?.username }} is on the approved list.</p>
+        <p>Your email: {{ userProfile?.mail }} is on the approved list.</p>
       </div>
 
       <!-- Case 2: Logged in BUT NOT Authorized -->
       <div v-else-if="isAuthenticated && !isAuthorizedUser" class="status-message unauthorized">
-        <h1>Welcome, {{ user?.name || user?.username }}!</h1>
+        <h1>Welcome, {{ userProfile?.mail }}!</h1>
         <p>You are successfully logged in.</p>
-        <p>However, your email ({{ user?.username }}) is not currently on the whitelist to access the application.</p>
+        <p>However, your email ({{ userProfile?.mail }}) is not currently on the whitelist to access the application.</p>
         <p>If you believe this is an error, please contact an administrator.</p>
       </div>
 
@@ -45,15 +45,10 @@
 import { useRouter } from 'vue-router';
 import { useAuth } from '../auth/useAuth';
 
-const { isAuthenticated, isAuthorizedUser, user, login, logout, isLoading } = useAuth();
+const { isAuthenticated, isAuthorizedUser, userProfile, login, logout, isLoading } = useAuth();
 </script>
 
 <style scoped>
-.home {
-  text-align: center;
-  padding: 20px;
-}
-
 .home {
   text-align: center;
   padding: 20px;
