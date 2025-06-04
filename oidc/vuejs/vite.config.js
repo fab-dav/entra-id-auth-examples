@@ -46,16 +46,6 @@ export default defineConfig(({ command, mode }) => {
   // Base configuration common to both 'serve' (dev) and 'build'
   const commonConfig = {
     plugins: [vue()],
-    // Example: Define global constants (can be accessed via import.meta.env.VITE_APP_VERSION)
-    // define: {
-    //   'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version)
-    // },
-    // Example: Configure aliases
-    // resolve: {
-    //   alias: {
-    //     '@': path.resolve(__dirname, './src'),
-    //   },
-    // },
   };
 
   if (command === 'serve') {

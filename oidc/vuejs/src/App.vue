@@ -60,7 +60,7 @@ onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search); // For query params
   const hashParams = new URLSearchParams(window.location.hash.substring(1)); // For hash params (OIDC can use either)
 
-  // OIDC response parameters (code, state, error for implicit/hybrid which we are not using but good to check)
+  // OIDC response parameters (code, state, error)
   const code = urlParams.get('code') || hashParams.get('code');
   const state = urlParams.get('state') || hashParams.get('state');
   const errorParam = urlParams.get('error') || hashParams.get('error');
@@ -77,17 +77,15 @@ onMounted(async () => {
 
   if (code && state) { // Presence of 'code' and 'state' indicates an OIDC callback
     isProcessingCallback.value = true;
-    isLoading.value = true; // Also general loading
+    isLoading.value = true; 
     authError.value = null;
     console.log("App.vue: Detected OIDC callback parameters. Processing signinRedirectCallback...");
     try {
       const user = await userManager.signinRedirectCallback(); // Process the callback
       if (user) {
         console.log("App.vue: OIDC signinRedirectCallback successful. User profile:", user.profile);
-        // The useAuth composable's event listener (addUserLoaded) should update global auth state.
-        // We might call initializeAuth here again to ensure UI reflects it immediately if events are slow.
+        // Calling initializeAuth again to ensure UI reflects it immediately if events are slow.
         await initializeAuth(); // Re-check auth state after callback
-
         const targetPath = user.state?.targetPath || '/';
         console.log("App.vue: Navigating to targetPath after callback:", targetPath);
         router.replace(targetPath); // Navigate, replacing callback URL in history
@@ -102,12 +100,7 @@ onMounted(async () => {
       console.log("Full error object from signinRedirectCallback:", e);
     } finally {
       isProcessingCallback.value = false;
-      // isLoading will be set by initializeAuth or the general auth loading
-      // window.history.replaceState({}, document.title, window.location.pathname); // Clean URL only if successful OR handled error
       if (!authError.value) { // Only clean URL if successful and navigated
-          // The router.replace above should handle cleaning the URL by navigating away.
-          // If targetPath was '/', it might still show params if not cleaned by IdP redirect itself
-          // Or if an error occurred before navigation.
       }
     }
   } else {
@@ -130,6 +123,5 @@ function clearAuthErrorAndRetryLogin() {
 </script>
 
 <style>
-/* ... your styles ... */
 .error-message { color: red; border: 1px solid red; padding: 10px; margin: 20px; text-align: center; }
 </style>

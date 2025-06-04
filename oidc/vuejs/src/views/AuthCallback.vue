@@ -38,7 +38,6 @@ onMounted(async () => {
       // But as a fallback:
       console.error("AuthCallback: signinRedirectCallback completed but returned no user.");
       error.value = "Login process completed, but no user information was returned.";
-      // router.replace('/'); // Or an error page
     }
   } catch (e) {
     console.error("AuthCallback: Failed to process login callback:", e);

@@ -17,7 +17,7 @@ onMounted(async () => {
   } catch (e) {
     console.error("Failed to process logout callback:", e);
   } finally {
-    // Navigate to the post-logout redirect URI (often home)
+    // Navigate to the post-logout redirect URI
     router.replace(userManager.settings.post_logout_redirect_uri || '/');
   }
 });
